@@ -127,7 +127,7 @@ def get_info():
     link = request.args.get('link')
     # link = "https://inmodemd.fr/"
     print(f'recieve requested for {link}')
-    scr_frog = run_screaming_frog(link, system="windows")
+    scr_frog = run_screaming_frog(link, system="linux")
     
     if scr_frog == "Success":
         return get_screamingfrog_info()
