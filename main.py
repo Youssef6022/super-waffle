@@ -6,7 +6,8 @@ app = Flask(__name__)
 
 def run_screaming_frog(link, system="windows"):
     if system == "windows":
-        command = fr'screamingfrogseospider --headless --crawl {link} --export-tabs "Internal:HTML" --save-crawl --output-folder "C:\Users\youss\OneDrive\Desktop\SEOOOOOOO" --overwrite'
+        output_path = r"C:\Users\youss\OneDrive\Desktop\Github\super-waffle"
+        command = fr'screamingfrogseospider --headless --crawl {link} --export-tabs "Internal:HTML" --save-crawl --output-folder "{output_path}" --overwrite'
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=r'C:\Program Files (x86)\Screaming Frog SEO Spider')
         stdout, stderr = process.communicate()
             
@@ -16,7 +17,8 @@ def run_screaming_frog(link, system="windows"):
             return "Success"
         
     if system == "linux":
-        command = fr'screamingfrogseospider --crawl {link} --headless --save-crawl --output-folder /home/ubuntu/yosuuu/super-waffle --export-tabs "Internal:HTML" --overwrite'
+        output_path = r"/home/ubuntu/yosuuu/super-waffle"
+        command = fr'screamingfrogseospider --crawl {link} --headless --save-crawl --output-folder {output_path} --export-tabs "Internal:HTML" --overwrite'
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
             
@@ -55,6 +57,10 @@ def get_screamingfrog_info():
     addresses_miss_h1 = []
     addresses_title_more_561px = []
     adresses_meta_desc_doublon = get_adresses_meta_desc_doublon(df)
+    
+    non_canonical = df[df['Canonical Link Element 1'].isnull()]['Address'].tolist()
+    self_canonical = df[df['Canonical Link Element 1'] == df['Address']]['Address'].tolist()
+    external_canonical = df[(df['Canonical Link Element 1'] != df['Address']) & (df['Canonical Link Element 1'].notna())]['Address'].tolist()
 
     for index, row in df.iterrows():
         if row['Status Code'] == 200:
@@ -69,8 +75,7 @@ def get_screamingfrog_info():
             
         if row['Title 1 Pixel Width'] > 561:
             addresses_title_more_561px.append(row['Address'])
-            
-            
+                
     json_data = {
         "Info": {
             "Number of Pages": len(df),
@@ -97,7 +102,21 @@ def get_screamingfrog_info():
             "Meta Description Doublon": {
                 "Number": len(adresses_meta_desc_doublon),
                 "Adresses": adresses_meta_desc_doublon
-            }
+            },
+            "Canonical": {
+                "None Canonical": {
+                    "Number": len(non_canonical),
+                    "Adresses": non_canonical
+                },
+                "Self Canonical": {
+                    "Number": len(self_canonical),
+                    "Adresses": self_canonical
+                },
+                "External Canonical": {
+                    "Number": len(external_canonical),
+                    "Adresses": external_canonical
+                }
+            },
         }
     }
             
@@ -107,8 +126,8 @@ def get_screamingfrog_info():
 def get_info():
     link = request.args.get('link')
     # link = "https://inmodemd.fr/"
-    print(link)
-    scr_frog = run_screaming_frog(link, system="linux")
+    print(f'recieve requested for {link}')
+    scr_frog = run_screaming_frog(link, system="windows")
     
     if scr_frog == "Success":
         return get_screamingfrog_info()
