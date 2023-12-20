@@ -16,7 +16,7 @@ def run_screaming_frog(link, system="windows"):
             return "Success"
         
     if system == "linux":
-        command = fr'screamingfrogseospider --crawl {link} --headless --save-crawl --output-folder /home/ubuntu/yosuuu/super-waffle --export-tabs "Internal:All" --overwrite'
+        command = fr'screamingfrogseospider --crawl {link} --headless --save-crawl --output-folder /home/ubuntu/yosuuu/super-waffle --export-tabs "Internal:HTML" --overwrite'
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         
@@ -46,7 +46,7 @@ def get_adresses_meta_desc_doublon(df):
     return adresses_meta_desc_doublon
 
 def get_screamingfrog_info():
-    df = pd.read_csv('Internal_HTML.csv')
+    df = pd.read_csv('internal_html.csv') 
 
     adresses_200 = []
     adresses_404 = []
