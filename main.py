@@ -8,34 +8,20 @@ def run_screaming_frog(link, system="windows"):
     if system == "windows":
         command = fr'screamingfrogseospider --headless --crawl {link} --export-tabs "Internal:HTML" --save-crawl --output-folder "C:\Users\youss\OneDrive\Desktop\SEOOOOOOO" --overwrite'
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=r'C:\Program Files (x86)\Screaming Frog SEO Spider')
+        stdout, stderr = process.communicate()
 
-        while True:
-            output = process.stdout.readline().decode()
-            if "Shutting down: Logger" in output or (output == '' and process.poll() is not None):
-                break
-            if output:
-                print(output.strip())
-        rc = process.poll()
-
-        if rc != 0:
-            return f"Error occurred: {process.stderr.read().decode()}"
+        if process.returncode != 0:
+            return f"Error occurred: {stderr.decode()}"
         else:
             return "Success"
         
     if system == "linux":
         command = fr'screamingfrogseospider --crawl {link} --headless --save-crawl --output-folder /home/ubuntu/yosuuu/super-waffle --export-tabs "Internal:HTML" --overwrite'
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        while True:
-            output = process.stdout.readline().decode()
-            if "Shutting down: Logger" in output or (output == '' and process.poll() is not None):
-                break
-            if output:
-                print(output.strip())
-        rc = process.poll()
-
-        if rc != 0:
-            return f"Error occurred: {process.stderr.read().decode()}"
+        stdout, stderr = process.communicate()
+        
+        if process.returncode != 0:
+            return f"Error occurred: {stderr.decode()}"
         else:
             return "Success"
         
