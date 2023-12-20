@@ -9,12 +9,6 @@ def run_screaming_frog(link, system="windows"):
         command = fr'screamingfrogseospider --headless --crawl {link} --export-tabs "Internal:HTML" --save-crawl --output-folder "C:\Users\youss\OneDrive\Desktop\SEOOOOOOO" --overwrite'
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=r'C:\Program Files (x86)\Screaming Frog SEO Spider')
         stdout, stderr = process.communicate()
-
-        while True:
-            line = process.stdout.readline()
-            if not line:
-                break
-            print(line.decode().strip())
             
         if process.returncode != 0:
             return f"Error occurred: {stderr.decode()}"
@@ -25,12 +19,6 @@ def run_screaming_frog(link, system="windows"):
         command = fr'screamingfrogseospider --crawl {link} --headless --save-crawl --output-folder /home/ubuntu/yosuuu/super-waffle --export-tabs "Internal:HTML" --overwrite'
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        
-        while True:
-            line = process.stdout.readline()
-            if not line:
-                break
-            print(line.decode().strip())
             
         if process.returncode != 0:
             return f"Error occurred: {stderr.decode()}"
