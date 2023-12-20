@@ -6,16 +6,30 @@ import pandas as pd
 from flask import Flask, request
 app = Flask(__name__)
 
-def run_screaming_frog(link):
-    command = fr'screamingfrogseospider --headless --crawl {link} --export-tabs "Internal:HTML" --save-crawl --output-folder "C:\Users\youss\OneDrive\Desktop\SEOOOOOOO" --overwrite'
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=r'C:\Program Files (x86)\Screaming Frog SEO Spider')
-    stdout, stderr = process.communicate()
+def run_screaming_frog(link, system="windows"):
+    if system == "windows":
+        command = fr'screamingfrogseospider --headless --crawl {link} --export-tabs "Internal:HTML" --save-crawl --output-folder "C:\Users\youss\OneDrive\Desktop\SEOOOOOOO" --overwrite'
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=r'C:\Program Files (x86)\Screaming Frog SEO Spider')
+        stdout, stderr = process.communicate()
 
-    if process.returncode != 0:
-        return f"Error occurred: {stderr.decode()}"
+        if process.returncode != 0:
+            return f"Error occurred: {stderr.decode()}"
+        else:
+            return "Success"
+        
+    if system == "linux":
+        command = fr'screamingfrogseospider --crawl {link} --headless --save-crawl --output-folder /home/ubuntu/yosuuu/super-waffle --export-tabs "Internal:All" --overwrite'
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        
+        if process.returncode != 0:
+            return f"Error occurred: {stderr.decode()}"
+        else:
+            return "Success"
+        
     else:
-        return "Success"
-
+        raise Exception("System not supported, can you please select windows or linux")
+    
 def get_adresses_meta_desc_doublon(df):
     meta_description_dict = {}
 
@@ -36,8 +50,6 @@ def get_adresses_meta_desc_doublon(df):
 def get_screamingfrog_info():
     df = pd.read_csv('Internal_HTML.csv')
 
-
-    
     adresses_200 = []
     adresses_404 = []
     adresses_301 = []
@@ -98,7 +110,7 @@ def get_info():
     link = request.args.get('link')
     # link = "https://inmodemd.fr/"
     print(link)
-    scr_frog = run_screaming_frog(link)
+    scr_frog = run_screaming_frog(link, system="linux")
     
     if scr_frog == "Success":
         return get_screamingfrog_info()
