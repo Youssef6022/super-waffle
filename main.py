@@ -1,6 +1,4 @@
 import subprocess
-import requests
-import json
 import pandas as pd
 
 from flask import Flask, request
@@ -118,4 +116,5 @@ def get_info():
         return scr_frog
     
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True) # windows
+    app.run(host='0.0.0.0', port=9567) # linux
