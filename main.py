@@ -17,10 +17,10 @@ print(f"Running System: {system}")
 
 def run_screaming_frog(link):
     if system == "Windows":
-        base_output_path = r"C:\Users\youss\OneDrive\Desktop\Github\super-waffle\Saved Sites"
+        base_output_path = r"C:\Users\youss\OneDrive\Desktop\Github\super-waffle\Saved-Sites"
         cwd = r'C:\Program Files (x86)\Screaming Frog SEO Spider'
     elif system == "Linux":
-        base_output_path = r"/home/ubuntu/yosuuu/super-waffle/Saved Sites"
+        base_output_path = r"/home/ubuntu/yosuuu/super-waffle/Saved-Sites"
         cwd = None
     else:
         raise Exception("System not supported, can you please select Windows or Linux")
@@ -56,7 +56,7 @@ def run_screaming_frog(link):
 
 def get_screamingfrog_info(link): 
     site_name = urlparse(link).netloc.replace("www.", "")
-    df = pandas.read_csv(os.path.join("Saved Sites", site_name, "internal_html.csv"))
+    df = pandas.read_csv(os.path.join("Saved-Sites", site_name, "internal_html.csv"))
     
     adresses_200 = df[df['Status Code'] == 200]['Address'].tolist()
     adresses_404 = df[df['Status Code'] == 404]['Address'].tolist()
