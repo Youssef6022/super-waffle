@@ -29,6 +29,7 @@ def run_screaming_frog(link):
     link_dir = os.path.join(base_output_path, site_name)
     
     if os.path.isdir(link_dir):
+        print(f"{site_name} already crawled")
         yield
     else:
         os.makedirs(link_dir, exist_ok=True)
