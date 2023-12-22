@@ -67,14 +67,16 @@ def get_screamingfrog_info(link):
     adresses_indexable = df[df['Indexability'] == 'Indexable']['Address'].tolist()
     adresses_not_indexable = df[df['Indexability'] == 'Non-Indexable']['Address'].tolist()
 
-    addresses_miss_h1, adresses_more_than_0_lenght = df[df['H1-1 Length'] == 0]['Address'].tolist(), df[df['H1-1 Length'] > 0][['Address', 'H1-1 Length']].values.tolist()
-    addresses_title_more_561px = df[df['Title 1 Pixel Width'] > 561]['Address'].tolist()
-    
-    adresses_meta_desc_doublon = df[df.duplicated(['Meta Description 1'], keep=False)]['Address'].tolist()
-    
-    non_canonical = df[df['Canonical Link Element 1'].isnull()]['Address'].tolist()
-    self_canonical = df[df['Canonical Link Element 1'] == df['Address']]['Address'].tolist()
-    external_canonical = df[(df['Canonical Link Element 1'] != df['Address']) & (df['Canonical Link Element 1'].notna())]['Address'].tolist()
+    addresses_miss_h1 = df[(df['H1-1 Length'] == 0) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+    adresses_with_h1 = df[(df['H1-1 Length'] > 0) & df['Address'].isin(adresses_indexable)][['Address', 'H1-1 Length']].values.tolist()
+
+    addresses_title_more_561px = df[(df['Title 1 Pixel Width'] > 561) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+
+    adresses_meta_desc_doublon = df[df.duplicated(['Meta Description 1'], keep=False) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+
+    non_canonical = df[df['Canonical Link Element 1'].isnull() & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+    self_canonical = df[(df['Canonical Link Element 1'] == df['Address']) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+    external_canonical = df[(df['Canonical Link Element 1'] != df['Address']) & (df['Canonical Link Element 1'].notna()) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
 
     json_data = {
         "Info": {
@@ -97,8 +99,8 @@ def get_screamingfrog_info(link):
                     "Adresses": addresses_miss_h1
                 },
                 "H1 > 0": {
-                    "Number": len(adresses_more_than_0_lenght),
-                    "Adresses, Lenght": adresses_more_than_0_lenght
+                    "Number": len(adresses_with_h1),
+                    "Adresses, Lenght": adresses_with_h1
                 }
             },
             "Title > 561px": {
