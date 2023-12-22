@@ -67,10 +67,11 @@ def get_screamingfrog_info(link):
     adresses_indexable = df[df['Indexability'] == 'Indexable']['Address'].tolist()
     adresses_not_indexable = df[df['Indexability'] == 'Non-Indexable']['Address'].tolist()
 
-    addresses_miss_h1 = df[(df['H1-1 Length'] == 0) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
-    adresses_with_h1 = df[(df['H1-1 Length'] > 0) & df['Address'].isin(adresses_indexable)][['Address', 'H1-1 Length']].values.tolist()
+    addresses_no_h1 = df[(df['H1-1 Length'] == 0) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+    adresses_h1 = df[(df['H1-1 Length'] > 0) & df['Address'].isin(adresses_indexable)][['Address', 'H1-1 Length']].values.tolist()
 
-    addresses_title_more_561px = df[(df['Title 1 Pixel Width'] > 561) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+    addresses_no_title = df[(df['Title 1 Pixel Width'] == 0) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+    addresses_title = df[(df['Title 1 Pixel Width'] > 0) & df['Address'].isin(adresses_indexable)]['Address', 'Title 1 Pixel Width'].values.tolist()
 
     adresses_meta_desc_doublon = df[df.duplicated(['Meta Description 1'], keep=False) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
 
@@ -94,18 +95,24 @@ def get_screamingfrog_info(link):
                 "Adresses": adresses_301
             },
             "H1 Lenght": {
-                "Missing H1": {
-                    "Number": len(addresses_miss_h1),
-                    "Adresses": addresses_miss_h1
+                "No H1": {
+                    "Number": len(addresses_no_h1),
+                    "Adresses": addresses_no_h1
                 },
-                "H1 > 0": {
-                    "Number": len(adresses_with_h1),
-                    "Adresses, Lenght": adresses_with_h1
+                "H1": {
+                    "Number": len(adresses_h1),
+                    "Adresses, Lenght": adresses_h1
                 }
             },
-            "Title > 561px": {
-                "Number": len(addresses_title_more_561px),
-                "Adresses": addresses_title_more_561px
+            "Title Lenght": {
+                "No Title": {
+                    "Number": len(addresses_no_title),
+                    "Adresses": addresses_no_title
+                },
+                "Ttile": {
+                    "Number": len(addresses_title),
+                    "Adresses": addresses_title
+                }
             },
             "Indexability": {
                 "Indexable": {
