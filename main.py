@@ -44,9 +44,10 @@ def run_screaming_frog(link):
             if output == b'' and process.poll() is not None:
                 break
             if output:
+                print(output.strip())
                 match = re.search(rb'SpiderProgress (\[mActive=\d+, mCompleted=\d+, mWaiting=\d+, mCompleted=\d+\.\d+%\])', output)
                 if match:
-                    print(f"Progress: {match.group(1).decode()}")
+                    # print(f"Progress: {match.group(1).decode()}")
                     yield match.group(1).decode()
         rc = process.poll()
 
