@@ -71,7 +71,7 @@ def get_screamingfrog_info(link):
     adresses_h1 = df[(df['H1-1 Length'] > 0) & df['Address'].isin(adresses_indexable)][['Address', 'H1-1 Length']].values.tolist()
 
     addresses_no_title = df[(df['Title 1 Pixel Width'] == 0) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
-    addresses_title = df[(df['Title 1 Pixel Width'] > 0) & df['Address'].isin(adresses_indexable)]['Address', 'Title 1 Pixel Width'].values.tolist()
+    addresses_title = df[(df['Title 1 Pixel Width'] > 0) & df['Address'].isin(adresses_indexable)][['Address', 'Title 1 Pixel Width']].values.tolist()
 
     adresses_meta_desc_doublon = df[df.duplicated(['Meta Description 1'], keep=False) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
 
