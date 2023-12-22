@@ -2,6 +2,7 @@ import re
 import os
 import json
 import time
+import shutil
 import platform
 import threading
 import subprocess
@@ -152,15 +153,14 @@ def get_screamingfrog_info(link):
 
 @app.route('/')
 def index():
-    return "C'est pas la Kevin ^^ mets /start_process"
-
+    return "C'est pas la Kevin ^^ mets /start_crawl"
     
-@app.route('/start_process', methods=['POST', 'GET'])
-def start_process():
+@app.route('/start_crawl', methods=['GET'])
+def start_crawl():
     # link = "https://www.dynergie.fr/"
     # link = "https://inmodemd.fr/"
     link = request.args.get('link')
-    print(f"Starting process for {link}")
+    print(f"Starting crawl for {link}")
     def generate():
         for progress in run_screaming_frog(link):
             if progress:
@@ -170,6 +170,17 @@ def start_process():
                 info = get_screamingfrog_info(link)
                 yield json.dumps(info)
     return Response(generate(), mimetype='text/event-stream')
+
+@app.route('/delete_crawl', methods=['GET'])
+def delete_crawl():
+    link = request.args.get('link')
+    site_name = urlparse(link).netloc.replace("www.", "")
+    link_dir = os.path.join("Saved-Sites", site_name)
+    if os.path.isdir(link_dir):
+        shutil.rmtree(link_dir)
+        return "Crawl deleted"
+    else:
+        return "Crawl not found", 404
 
 if __name__ == '__main__':
     if system == "Windows":
