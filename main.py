@@ -156,8 +156,9 @@ def index():
     
 @app.route('/start_process', methods=['POST', 'GET'])
 def start_process():
-    link = "https://www.dynergie.fr/"
+    # link = "https://www.dynergie.fr/"
     # link = "https://inmodemd.fr/"
+    link = request.args.get('link')
     print(f"Starting process for {link}")
     def generate():
         for progress in run_screaming_frog(link):
