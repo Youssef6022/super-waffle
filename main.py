@@ -1,81 +1,79 @@
+import re
+import os
+import json
+import time
+import platform
+import threading
 import subprocess
-import pandas as pd
+import pandas
 
-from flask import Flask, request
+from urllib.parse import urlparse
+from flask import Flask, request, Response
+
 app = Flask(__name__)
 
-def run_screaming_frog(link, system="windows"):
-    if system == "windows":
-        output_path = r"C:\Users\youss\OneDrive\Desktop\Github\super-waffle"
-        command = fr'screamingfrogseospider --headless --crawl {link} --export-tabs "Internal:HTML" --save-crawl --output-folder "{output_path}" --overwrite'
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=r'C:\Program Files (x86)\Screaming Frog SEO Spider')
-        stdout, stderr = process.communicate()
-            
-        if process.returncode != 0:
-            return f"Error occurred: {stderr.decode()}"
-        else:
-            return "Success"
-        
-    if system == "linux":
-        output_path = r"/home/ubuntu/yosuuu/super-waffle"
-        command = fr'screamingfrogseospider --crawl {link} --headless --save-crawl --output-folder {output_path} --export-tabs "Internal:HTML" --overwrite'
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-            
-        if process.returncode != 0:
-            return f"Error occurred: {stderr.decode()}"
-        else:
-            return "Success"
-        
+system = platform.system()
+print(f"Running System: {system}")
+
+def run_screaming_frog(link):
+    if system == "Windows":
+        base_output_path = r"C:\Users\youss\OneDrive\Desktop\Github\super-waffle\Saved Sites"
+        cwd = r'C:\Program Files (x86)\Screaming Frog SEO Spider'
+    elif system == "Linux":
+        base_output_path = r"/home/ubuntu/yosuuu/super-waffle/Saved Sites"
+        cwd = None
     else:
-        raise Exception("System not supported, can you please select windows or linux")
+        raise Exception("System not supported, can you please select Windows or Linux")
     
-def get_adresses_meta_desc_doublon(df):
-    meta_description_dict = {}
+    site_name = urlparse(link).netloc.replace("www.", "")
+    link_dir = os.path.join(base_output_path, site_name)
+    
+    if os.path.isdir(link_dir):
+        yield
+    else:
+        os.makedirs(link_dir, exist_ok=True)
+        output_path = link_dir
+        
+        command = fr'screamingfrogseospider --headless --crawl {link} --export-tabs "Internal:HTML" --save-crawl --output-folder "{output_path}" --overwrite'
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 
-    for index, row in df.iterrows():
-        if row['Meta Description 1'] in meta_description_dict:
-            meta_description_dict[row['Meta Description 1']].append(row['Address'])
+        while True:
+            output = process.stdout.readline()
+            if output == b'' and process.poll() is not None:
+                break
+            if output:
+                match = re.search(rb'SpiderProgress (\[mActive=\d+, mCompleted=\d+, mWaiting=\d+, mCompleted=\d+\.\d+%\])', output)
+                if match:
+                    print(f"Progress: {match.group(1).decode()}")
+                    yield match.group(1).decode()
+        rc = process.poll()
+
+        if rc != 0:
+            stderr = process.stderr.read()
+            yield f"Error occurred: {stderr.decode()}"
         else:
-            meta_description_dict[row['Meta Description 1']] = [row['Address']]
-            
-    adresses_meta_desc_doublon = []
+            yield
 
-    for meta_description, addresses in meta_description_dict.items():
-        if len(addresses) > 1:
-            adresses_meta_desc_doublon.extend(addresses)
-            
-    return adresses_meta_desc_doublon
+def get_screamingfrog_info(link): 
+    site_name = urlparse(link).netloc.replace("www.", "")
+    df = pandas.read_csv(os.path.join("Saved Sites", site_name, "internal_html.csv"))
+    
+    adresses_200 = df[df['Status Code'] == 200]['Address'].tolist()
+    adresses_404 = df[df['Status Code'] == 404]['Address'].tolist()
+    adresses_301 = df[df['Status Code'] == 301]['Address'].tolist()
+    
+    adresses_indexable = df[df['Indexability'] == 'Indexable']['Address'].tolist()
+    adresses_not_indexable = df[df['Indexability'] == 'Non-Indexable']['Address'].tolist()
 
-def get_screamingfrog_info():
-    df = pd.read_csv('internal_html.csv') 
-
-    adresses_200 = []
-    adresses_404 = []
-    adresses_301 = []
-
-    addresses_miss_h1 = []
-    addresses_title_more_561px = []
-    adresses_meta_desc_doublon = get_adresses_meta_desc_doublon(df)
+    addresses_miss_h1, adresses_more_than_0_lenght = df[df['H1-1 Length'] == 0]['Address'].tolist(), df[df['H1-1 Length'] > 0][['Address', 'H1-1 Length']].values.tolist()
+    addresses_title_more_561px = df[df['Title 1 Pixel Width'] > 561]['Address'].tolist()
+    
+    adresses_meta_desc_doublon = df[df.duplicated(['Meta Description 1'], keep=False)]['Address'].tolist()
     
     non_canonical = df[df['Canonical Link Element 1'].isnull()]['Address'].tolist()
     self_canonical = df[df['Canonical Link Element 1'] == df['Address']]['Address'].tolist()
     external_canonical = df[(df['Canonical Link Element 1'] != df['Address']) & (df['Canonical Link Element 1'].notna())]['Address'].tolist()
 
-    for index, row in df.iterrows():
-        if row['Status Code'] == 200:
-            adresses_200.append(row['Address'])
-        if row['Status Code'] == 404:
-            adresses_404.append(row['Address'])
-        if row['Status Code'] == 301:
-            adresses_301.append(row['Address'])
-            
-        if row['H1-1 Length'] == 0:
-            addresses_miss_h1.append(row['Address'])
-            
-        if row['Title 1 Pixel Width'] > 561:
-            addresses_title_more_561px.append(row['Address'])
-                
     json_data = {
         "Info": {
             "Number of Pages": len(df),
@@ -91,13 +89,42 @@ def get_screamingfrog_info():
                 "Number": len(adresses_301),
                 "Adresses": adresses_301
             },
-            "Missing H1": {
-                "Number": len(addresses_miss_h1),
-                "Adresses": addresses_miss_h1
+            "H1 Lenght": {
+                "Missing H1": {
+                    "Number": len(addresses_miss_h1),
+                    "Adresses": addresses_miss_h1
+                },
+                "H1 > 0": {
+                    "Number": len(adresses_more_than_0_lenght),
+                    "Adresses, Lenght": adresses_more_than_0_lenght
+                }
             },
             "Title > 561px": {
                 "Number": len(addresses_title_more_561px),
                 "Adresses": addresses_title_more_561px
+            },
+            "Indexability": {
+                "Indexable": {
+                    "Number": len(adresses_indexable),
+                    "Adresses": adresses_indexable
+                },
+                "Not Indexable": {
+                    "301": {
+                        "Number": len(adresses_301),
+                        "Adresses": adresses_301
+                    },
+                    "404": {
+                        "Number": len(adresses_404),
+                        "Adresses": adresses_404
+                    },
+                    "External Canonical": {
+                        "Number": len(external_canonical),
+                        "Adresses": external_canonical
+                    },
+                    "Number 301 + 404 + External Canonical": len(adresses_301) + len(adresses_404) + len(external_canonical),
+                    "Number others": len(adresses_not_indexable) - (len(adresses_301) + len(adresses_404) + len(external_canonical)),
+                    "Total Not Indexable": len(adresses_not_indexable)
+                }
             },
             "Meta Description Doublon": {
                 "Number": len(adresses_meta_desc_doublon),
@@ -121,19 +148,29 @@ def get_screamingfrog_info():
     }
             
     return json_data
-     
+
 @app.route('/')
-def get_info():
-    link = request.args.get('link')
+def index():
+    return "C'est pas la Kevin ^^ mets /start_process"
+
+    
+@app.route('/start_process', methods=['POST', 'GET'])
+def start_process():
+    link = "https://www.dynergie.fr/"
     # link = "https://inmodemd.fr/"
-    print(f'recieve requested for {link}')
-    scr_frog = run_screaming_frog(link, system="linux")
-    
-    if scr_frog == "Success":
-        return get_screamingfrog_info()
-    else:
-        return scr_frog
-    
+    print(f"Starting process for {link}")
+    def generate():
+        for progress in run_screaming_frog(link):
+            if progress:
+                yield f"data:{progress}\n\n"
+                time.sleep(1)
+            if not progress:
+                info = get_screamingfrog_info(link)
+                yield json.dumps(info)
+    return Response(generate(), mimetype='text/event-stream')
+
 if __name__ == '__main__':
-    # app.run(debug=True) # windows
-    app.run(host='0.0.0.0', port=9567) # linux
+    if system == "Windows":
+        app.run(debug=True)
+    elif system == "Linux":
+        app.run(host='0.0.0.0', port=9567)
