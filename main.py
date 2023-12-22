@@ -1,6 +1,7 @@
 import re
 import os
 import json
+
 import time
 import shutil
 import platform
@@ -9,8 +10,10 @@ import subprocess
 import pandas
 
 from urllib.parse import urlparse
+from flask_cors import CORS
 from flask import Flask, request, Response
 
+CORS(allow_headers='*')
 app = Flask(__name__)
 
 system = platform.system()
