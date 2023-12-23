@@ -54,6 +54,8 @@ def run_screaming_frog(link):
                 if match:
                     # print(f"Progress: {match.group(1).decode()}")
                     yield match.group(1).decode()
+                else:
+                    continue
         rc = process.poll()
 
         if rc != 0:
