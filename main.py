@@ -8,6 +8,7 @@ import platform
 import threading
 import subprocess
 import pandas
+import requests
 
 from urllib.parse import urlparse
 from flask_cors import CORS
@@ -68,24 +69,25 @@ def get_screamingfrog_info(link):
     site_name = urlparse(link).netloc.replace("www.", "")
     df = pandas.read_csv(os.path.join("Saved-Sites", site_name, "internal_html.csv"))
     
+    robots = requests.get(f"{link}/robots.txt")
     adresses_200 = df[df['Status Code'] == 200]['Address'].tolist()
     adresses_404 = df[df['Status Code'] == 404]['Address'].tolist()
     adresses_301 = df[df['Status Code'] == 301]['Address'].tolist()
     
-    adresses_indexable = df[df['Indexability'] == 'Indexable']['Address'].tolist()
+    adresses_indexable = df[df['Indexability'] == 'Indexable'][['Address', 'Word Count', 'Crawl Depth', 'Folder Depth', 'Inlinks']].values.tolist()
     adresses_not_indexable = df[df['Indexability'] == 'Non-Indexable']['Address'].tolist()
 
-    addresses_no_h1 = df[(df['H1-1 Length'] == 0) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
-    adresses_h1 = df[(df['H1-1 Length'] > 0) & df['Address'].isin(adresses_indexable)][['Address', 'H1-1 Length']].values.tolist()
+    addresses_no_h1 = df[(df['H1-1 Length'] == 0) & df['Address'].isin([item[0] for item in adresses_indexable])]['Address'].tolist()
+    adresses_h1 = df[(df['H1-1 Length'] > 0) & df['Address'].isin([item[0] for item in adresses_indexable])][['Address', 'H1-1 Length']].values.tolist()
 
-    addresses_no_title = df[(df['Title 1 Pixel Width'] == 0) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
-    addresses_title = df[(df['Title 1 Pixel Width'] > 0) & df['Address'].isin(adresses_indexable)][['Address', 'Title 1 Pixel Width']].values.tolist()
+    addresses_no_title = df[(df['Title 1 Pixel Width'] == 0) & df['Address'].isin([item[0] for item in adresses_indexable])]['Address'].tolist()
+    addresses_title = df[(df['Title 1 Pixel Width'] > 0) & df['Address'].isin([item[0] for item in adresses_indexable])][['Address', 'Title 1 Pixel Width']].values.tolist()
 
-    adresses_meta_desc_doublon = df[df.duplicated(['Meta Description 1'], keep=False) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+    adresses_meta_desc_doublon = df[df.duplicated(['Meta Description 1'], keep=False) & df['Address'].isin([item[0] for item in adresses_indexable])]['Address'].tolist()
 
-    non_canonical = df[df['Canonical Link Element 1'].isnull() & df['Address'].isin(adresses_indexable)]['Address'].tolist()
-    self_canonical = df[(df['Canonical Link Element 1'] == df['Address']) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
-    external_canonical = df[(df['Canonical Link Element 1'] != df['Address']) & (df['Canonical Link Element 1'].notna()) & df['Address'].isin(adresses_indexable)]['Address'].tolist()
+    non_canonical = df[df['Canonical Link Element 1'].isnull() & df['Address'].isin([item[0] for item in adresses_indexable])]['Address'].tolist()
+    self_canonical = df[(df['Canonical Link Element 1'] == df['Address']) & df['Address'].isin([item[0] for item in adresses_indexable])]['Address'].tolist()
+    external_canonical = df[(df['Canonical Link Element 1'] != df['Address']) & (df['Canonical Link Element 1'].notna()) & df['Address'].isin([item[0] for item in adresses_indexable])]['Address'].tolist()
 
     json_data = {
         "Info": {
@@ -125,7 +127,7 @@ def get_screamingfrog_info(link):
             "Indexability": {
                 "Indexable": {
                     "Number": len(adresses_indexable),
-                    "Adresses": adresses_indexable
+                    "Adresses & Word Count & Crawl Depth & Folder Depth & Inlinks": adresses_indexable
                 },
                 "Not Indexable": {
                     "301": {
@@ -163,6 +165,9 @@ def get_screamingfrog_info(link):
                     "Adresses": external_canonical
                 }
             },
+            "Robots.txt": {
+                "Status Code": robots.status_code,
+            }
         }
     }
             
