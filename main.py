@@ -33,8 +33,10 @@ def run_screaming_frog(link):
     link_dir = os.path.join(base_output_path, site_name)
     
     if os.path.isdir(link_dir):
-        print(f"{site_name} already crawled")
-        yield
+        if len(os.listdir(link_dir)) == 0:
+            yield "Being crawled..."
+        else:
+            yield
     else:
         os.makedirs(link_dir, exist_ok=True)
         output_path = link_dir
@@ -177,6 +179,8 @@ def start_crawl():
     def generate():
         for progress in run_screaming_frog(link):
             if progress:
+                if progress == "Being crawled...":
+                    yield f"data:{progress}\n\n"
                 yield f"data:{progress}\n\n"
                 time.sleep(1)
             if not progress:
